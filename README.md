@@ -1,66 +1,124 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Microsserviço de Gerenciamento de Viagens Corporativas
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este é um microsserviço desenvolvido em Laravel para gerenciar pedidos de viagem corporativa, fornecendo uma API REST para operações de criação, atualização, consulta e listagem de pedidos.
 
-## About Laravel
+## Tecnologias Utilizadas
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Laravel 12
+- MySQL 8.0
+- Redis
+- Docker
+- JWT para autenticação
+- PHPUnit para testes automatizados
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Funcionalidades
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- Criação de pedidos de viagem (destino, data de ida, data de volta)
+- Atualização de status de pedidos (aprovado, cancelado)
+- Consulta detalhada de pedidos
+- Listagem de todos os pedidos com filtros (status, período, destino)
+- Cancelamento de pedidos
+- Notificações por e-mail para aprovações e cancelamentos
+- Autenticação JWT
+- Controle de acesso baseado em perfis (usuário e admin)
 
-## Learning Laravel
+## Requisitos
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- Docker
+- Docker Compose
+- Git
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Instalação e Configuração
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Passo 1: Clonar o repositório
 
-## Laravel Sponsors
+```bash
+git clone https://github.com/seu-usuario/viagens-corporativas.git
+cd viagens-corporativas
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Passo 2: Configurar o ambiente
 
-### Premium Partners
+```bash
+cp .env.example .env
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+Edite o arquivo `.env` com suas configurações desejadas (banco de dados, etc.)
 
-## Contributing
+### Passo 3: Iniciar os containers Docker
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```bash
+docker-compose up -d
+```
 
-## Code of Conduct
+### Passo 4: Instalar dependências e configurar o projeto
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+docker-compose exec app composer install
+docker-compose exec app php artisan key:generate
+docker-compose exec app php artisan jwt:secret
+docker-compose exec app php artisan migrate
+docker-compose exec app php artisan db:seed (opcional para dados de teste)
+```
 
-## Security Vulnerabilities
+## Estrutura do Banco de Dados
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+- `users`: Armazena informações dos usuários
+- `travel_requests`: Armazena os pedidos de viagem
+- `notifications`: Armazena as notificações enviadas aos usuários
 
-## License
+## Endpoints da API
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Autenticação
+- `POST /api/register`: Registrar um novo usuário
+- `POST /api/login`: Autenticar usuário e obter token JWT
+- `POST /api/logout`: Deslogar (invalidar token)
+- `POST /api/refresh`: Atualizar token JWT
+
+### Pedidos de Viagem
+- `GET /api/travel-requests`: Listar todos os pedidos de viagem do usuário atual (ou todos para admin)
+- `POST /api/travel-requests`: Criar um novo pedido de viagem
+- `GET /api/travel-requests/{id}`: Consultar um pedido de viagem específico
+- `PATCH /api/travel-requests/{id}/status`: Atualizar o status de um pedido (apenas admin)
+- `POST /api/travel-requests/{id}/cancel`: Cancelar um pedido de viagem (pelo solicitante)
+
+## Filtros Disponíveis
+
+Ao listar pedidos (`GET /api/travel-requests`), os seguintes filtros podem ser aplicados:
+
+- `status`: Filtrar por status (solicitado, aprovado, cancelado)
+- `destination`: Filtrar por destino
+- `start_date` e `end_date`: Filtrar por período
+
+Exemplo: `/api/travel-requests?status=aprovado&destination=São%20Paulo&start_date=2025-04-01&end_date=2025-04-30`
+
+## Executando Testes
+
+Para rodar os testes automatizados:
+
+```bash
+docker-compose exec app php artisan test
+```
+
+## Pipeline CI/CD
+
+O projeto inclui um pipeline de CI/CD configurado com GitHub Actions que:
+1. Executa testes automatizados
+2. Verifica o estilo de código
+3. Realiza deploy automático (quando configurado)
+
+## Recursos Adicionais
+
+- A API implementa validação de dados no backend
+- Tratamento de erros apropriado
+- Documentação detalhada
+- Testes automatizados para todas as funcionalidades principais
+
+## Contribuição
+
+Para contribuir com o projeto:
+1. Faça um fork do repositório
+2. Crie uma branch para sua feature (`git checkout -b feature/nome-da-feature`)
+3. Faça commit das suas alterações (`git commit -am 'Adiciona nova feature'`)
+4. Envie para o GitHub (`git push origin feature/nome-da-feature`)
+5. Crie um Pull Request

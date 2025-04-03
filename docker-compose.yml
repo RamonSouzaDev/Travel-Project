@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: viagens-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ./:/var/www
+    networks:
+      - viagens-network
+    depends_on:
+      - db
+      - redis
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+
+  nginx:
+    image: nginx:alpine
+    container_name: viagens-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx:/etc/nginx/conf.d/
+    networks:
+      - viagens-network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: viagens-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: viagens_corporativas
+      MYSQL_ROOT_PASSWORD: viagens_password
+      MYSQL_PASSWORD: viagens_password
+      MYSQL_USER: viagens_user
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - ./docker/mysql:/docker-entrypoint-initdb.d
+      - viagens-db-data:/var/lib/mysql
+    networks:
+      - viagens-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-pviagens_password"]
+      retries: 3
+      timeout: 5s
+
+  redis:
+    image: redis:alpine
+    container_name: viagens-redis
+    restart: unless-stopped
+    networks:
+      - viagens-network
+
+networks:
+  viagens-network:
+    driver: bridge
+
+volumes:
+  viagens-db-data:
