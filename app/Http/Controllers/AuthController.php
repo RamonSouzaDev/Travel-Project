@@ -75,14 +75,29 @@ class AuthController extends Controller
 
     public function logout()
     {
-        $this->guard->logout();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Logout realizado com sucesso',
-        ]);
+        try {
+            if (!$this->guard->check()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Usuário não autenticado.',
+                ], 401);
+            }
+    
+            $this->guard->logout();
+    
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Logout realizado com sucesso',
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Erro ao realizar logout.',
+                'exception' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
     }
-
+    
     public function refresh()
     {
         return response()->json([
