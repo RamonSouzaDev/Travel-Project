@@ -1,124 +1,179 @@
-# Microsserviço de Gerenciamento de Viagens Corporativas
+<h1 align="center">Olá 👋, Eu sou Ramon Mendes</h1>
+<h3 align="center">Um desenvolvedor back-end apaixonado por tecnologia</h3>
 
-Este é um microsserviço desenvolvido em Laravel para gerenciar pedidos de viagem corporativa, fornecendo uma API REST para operações de criação, atualização, consulta e listagem de pedidos.
+- 🔭 Atualmente estou trabalhando no projeto [Travel-Project](https://github.com/RamonSouzaDev/Travel-Project)
+- 🌱 Atualmente estou aprendendo **Laravel, MySQL e boas práticas de microsserviços**
+- 📫 Como chegar até mim: **dwmom@hotmail.com**
 
-## Tecnologias Utilizadas
+<h3 align="left">Vamos fazer networking:</h3>
+<p align="left">
+  <a href="https://www.linkedin.com/in/ramon-mendes-b44456164/" target="blank">
+    <img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="ramon-linkedin" height="30" width="40" />
+  </a>
+</p>
 
-- Laravel 12
-- MySQL 8.0
-- Redis
-- Docker
-- JWT para autenticação
-- PHPUnit para testes automatizados
+<h3 align="left">Linguagens e ferramentas:</h3>
+<p align="left">
+  <a href="https://laravel.com/" target="_blank" rel="noreferrer">
+    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/laravel/laravel-plain-wordmark.svg" alt="laravel" width="40" height="40"/>
+  </a>
+  <a href="https://www.mysql.com/" target="_blank" rel="noreferrer">
+    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/mysql/mysql-original-wordmark.svg" alt="mysql" width="40" height="40"/>
+  </a>
+  <a href="https://www.php.net" target="_blank" rel="noreferrer">
+    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/php/php-original.svg" alt="php" width="40" height="40"/>
+  </a>
+  <a href="https://www.docker.com/" target="_blank" rel="noreferrer">
+    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/docker/docker-original-wordmark.svg" alt="docker" width="40" height="40"/>
+  </a>
+  <a href="https://www.linux.org/" target="_blank" rel="noreferrer">
+    <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/linux/linux-original.svg" alt="linux" width="40" height="40"/>
+  </a>
+</p>
 
-## Funcionalidades
+---
 
-- Criação de pedidos de viagem (destino, data de ida, data de volta)
-- Atualização de status de pedidos (aprovado, cancelado)
-- Consulta detalhada de pedidos
-- Listagem de todos os pedidos com filtros (status, período, destino)
-- Cancelamento de pedidos
-- Notificações por e-mail para aprovações e cancelamentos
-- Autenticação JWT
-- Controle de acesso baseado em perfis (usuário e admin)
+## 🚀 Como instalar e rodar o projeto Laravel
 
-## Requisitos
+| Etapa | Comando |
+|-------|---------|
+| **1. Clonar o repositório** | `git clone https://github.com/RamonSouzaDev/Travel-Project.git` |
+| **2. Acessar a pasta do projeto** | `cd Travel-Project` |
+| **3. Instalar dependências** | `composer install` |
+| **4. Copiar o arquivo `.env`** | `cp .env.example .env` |
+| **5. Gerar chave da aplicação** | `php artisan key:generate` |
+| **6. Gerar chave JWT** | `php artisan jwt:secret` |
+| **7. Rodar as migrations** | `php artisan migrate` |
+| **8. (Opcional) Corrigir permissões** | `chmod -R 775 storage bootstrap/cache` |
+| **9. Rodar o servidor local** | `php artisan serve`<br>📍 Disponível em: `http://localhost:8000` |
 
-- Docker
-- Docker Compose
-- Git
+---
 
-## Instalação e Configuração
+⚙️ Arquivo .env - Configurações de ambiente
+Para garantir que tudo funcione corretamente, seu arquivo .env deve conter:
 
-### Passo 1: Clonar o repositório
+APP_NAME=Laravel
+APP_ENV=local
+APP_KEY=base64:YFjhby94oBU9976uowWNabYxYVqJTr6bUYI2DY/CqsM=
+APP_DEBUG=true
+APP_URL=http://localhost
 
-```bash
-git clone https://github.com/seu-usuario/viagens-corporativas.git
-cd viagens-corporativas
-```
+APP_LOCALE=en
+APP_FALLBACK_LOCALE=en
+APP_FAKER_LOCALE=en_US
 
-### Passo 2: Configurar o ambiente
+APP_MAINTENANCE_DRIVER=file
+# APP_MAINTENANCE_STORE=database
 
-```bash
-cp .env.example .env
-```
+PHP_CLI_SERVER_WORKERS=4
 
-Edite o arquivo `.env` com suas configurações desejadas (banco de dados, etc.)
+BCRYPT_ROUNDS=12
 
-### Passo 3: Iniciar os containers Docker
+LOG_CHANNEL=stack
+LOG_STACK=single
+LOG_DEPRECATIONS_CHANNEL=null
+LOG_LEVEL=debug
 
-```bash
-docker-compose up -d
-```
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=viagens_corporativas
+DB_USERNAME=viagens_user
+DB_PASSWORD=viagens_password
 
-### Passo 4: Instalar dependências e configurar o projeto
 
-```bash
-docker-compose exec app composer install
-docker-compose exec app php artisan key:generate
-docker-compose exec app php artisan jwt:secret
-docker-compose exec app php artisan migrate
-docker-compose exec app php artisan db:seed (opcional para dados de teste)
-```
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_ENCRYPT=false
+SESSION_PATH=/
+SESSION_DOMAIN=null
 
-## Estrutura do Banco de Dados
+BROADCAST_CONNECTION=log
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=database
 
-- `users`: Armazena informações dos usuários
-- `travel_requests`: Armazena os pedidos de viagem
-- `notifications`: Armazena as notificações enviadas aos usuários
+CACHE_STORE=file
+# CACHE_PREFIX=
 
-## Endpoints da API
+MEMCACHED_HOST=127.0.0.1
 
-### Autenticação
-- `POST /api/register`: Registrar um novo usuário
-- `POST /api/login`: Autenticar usuário e obter token JWT
-- `POST /api/logout`: Deslogar (invalidar token)
-- `POST /api/refresh`: Atualizar token JWT
+REDIS_CLIENT=phpredis
+REDIS_HOST=redis
+REDIS_PASSWORD=null
+REDIS_PORT=6379
 
-### Pedidos de Viagem
-- `GET /api/travel-requests`: Listar todos os pedidos de viagem do usuário atual (ou todos para admin)
-- `POST /api/travel-requests`: Criar um novo pedido de viagem
-- `GET /api/travel-requests/{id}`: Consultar um pedido de viagem específico
-- `PATCH /api/travel-requests/{id}/status`: Atualizar o status de um pedido (apenas admin)
-- `POST /api/travel-requests/{id}/cancel`: Cancelar um pedido de viagem (pelo solicitante)
+MAIL_MAILER=log
+MAIL_SCHEME=null
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_FROM_ADDRESS="hello@example.com"
+MAIL_FROM_NAME="${APP_NAME}"
 
-## Filtros Disponíveis
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_DEFAULT_REGION=us-east-1
+AWS_BUCKET=
+AWS_USE_PATH_STYLE_ENDPOINT=false
 
-Ao listar pedidos (`GET /api/travel-requests`), os seguintes filtros podem ser aplicados:
+VITE_APP_NAME="${APP_NAME}"
+JWT_SECRET=t6nDcWHEfnR56QlFXQZGOgc55E6l8cv0UK4JRwi7p5IsyoK3YZ66SUU7STLhPboD
+JWT_TTL=60
 
-- `status`: Filtrar por status (solicitado, aprovado, cancelado)
-- `destination`: Filtrar por destino
-- `start_date` e `end_date`: Filtrar por período
+JWT_ALGO=HS256
 
-Exemplo: `/api/travel-requests?status=aprovado&destination=São%20Paulo&start_date=2025-04-01&end_date=2025-04-30`
+--- 
 
-## Executando Testes
+## ✅ Testes Automatizados
 
-Para rodar os testes automatizados:
+| Etapa | Comando |
+|-------|---------|
+| **Rodar todos os testes** | `php artisan test` |
 
-```bash
-docker-compose exec app php artisan test
-```
+---
 
-## Pipeline CI/CD
+## 🐳 Executando com Docker
 
-O projeto inclui um pipeline de CI/CD configurado com GitHub Actions que:
-1. Executa testes automatizados
-2. Verifica o estilo de código
-3. Realiza deploy automático (quando configurado)
+| Etapa | Comando |
+|-------|---------|
+| **1. Subir containers** | `docker-compose up -d --build` |
+| **2. Acessar o container** | `docker exec -it travel_app bash` |
+| **3. Rodar as migrations** | `php artisan migrate` |
 
-## Recursos Adicionais
+---
 
-- A API implementa validação de dados no backend
-- Tratamento de erros apropriado
-- Documentação detalhada
-- Testes automatizados para todas as funcionalidades principais
+## 📌 Rotas da API
 
-## Contribuição
+> ⚠️ As rotas protegidas exigem **Bearer Token** do usuário logado.
 
-Para contribuir com o projeto:
-1. Faça um fork do repositório
-2. Crie uma branch para sua feature (`git checkout -b feature/nome-da-feature`)
-3. Faça commit das suas alterações (`git commit -am 'Adiciona nova feature'`)
-4. Envie para o GitHub (`git push origin feature/nome-da-feature`)
-5. Crie um Pull Request
+### 🔐 Autenticação
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `POST` | `/api/register` | Cadastro de novo usuário |
+| `POST` | `/api/login` | Login de usuário |
+| `POST` | `/api/logout` | Logout do usuário |
+
+---
+
+### ✈️ Pedidos de Viagem
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `POST` | `/api/travel-requests` | Criar novo pedido de viagem |
+| `GET` | `/api/travel-requests` | Listar pedidos do usuário logado |
+| `GET` | `/api/travel-requests/{id}` | Visualizar um pedido específico |
+| `POST` | `/api/travel-requests/{id}/cancel` | Cancelar pedido do próprio usuário |
+| `PATCH` | `/api/travel-requests/{id}/status` | Atualizar status do pedido (admin) |
+
+---
+
+## 🗓️ Última atualização
+
+Projeto atualizado em **03/04/2025**
+
+---
+
+
+
