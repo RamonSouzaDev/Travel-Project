@@ -5,13 +5,21 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTravelRequestRequest;
 use App\Http\Requests\UpdateTravelRequestStatusRequest;
 use App\Http\Resources\TravelRequestResource;
-use App\Models\TravelRequest;
+use App\Services\TravelRequestService;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Response;
 
 class TravelRequestController extends Controller
 {
+    protected $travelRequestService;
+    
+    public function __construct(TravelRequestService $travelRequestService)
+    {
+        $this->travelRequestService = $travelRequestService;
+    }
+
     /**
      * Exibe uma lista com todos os pedidos de viagem do usuário atual ou todos para admins.
      */
@@ -24,25 +32,8 @@ class TravelRequestController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $user = Auth::user();
-        $query = $user->isAdmin() ? TravelRequest::query() : $user->travelRequests();
-
-        // Filtrar por status
-        if ($request->has('status')) {
-            $query->withStatus($request->status);
-        }
-
-        // Filtrar por destino
-        if ($request->has('destination')) {
-            $query->destination($request->destination);
-        }
-
-        // Filtrar por período
-        if ($request->has(['start_date', 'end_date'])) {
-            $query->betweenDates($request->start_date, $request->end_date);
-        }
-
-        $travelRequests = $query->latest()->paginate(15);
+        $filters = $request->only(['status', 'destination', 'start_date', 'end_date']);
+        $travelRequests = $this->travelRequestService->getAllTravelRequests($filters);
 
         return TravelRequestResource::collection($travelRequests);
     }
@@ -52,11 +43,12 @@ class TravelRequestController extends Controller
      */
     public function store(StoreTravelRequestRequest $request)
     {
-        $travelRequest = new TravelRequest($request->validated());
-        $travelRequest->user_id = Auth::id();
-        $travelRequest->save();
-
-        return new TravelRequestResource($travelRequest);
+        try {
+            $travelRequest = $this->travelRequestService->createTravelRequest($request->validated());
+            return new TravelRequestResource($travelRequest);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -64,15 +56,16 @@ class TravelRequestController extends Controller
      */
     public function show(string $id)
     {
-        $user = Auth::user();
-        $travelRequest = TravelRequest::findOrFail($id);
-        
-        // Verifica se o usuário tem permissão para ver este pedido
-        if (!$user->isAdmin() && $travelRequest->user_id !== $user->id) {
-            return response()->json(['message' => 'Não autorizado a ver este pedido de viagem'], Response::HTTP_FORBIDDEN);
+        try {
+            $travelRequest = $this->travelRequestService->getTravelRequest($id);
+            return new TravelRequestResource($travelRequest);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Pedido de viagem não encontrado'], Response::HTTP_NOT_FOUND);
+        } catch (AuthorizationException $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
-
-        return new TravelRequestResource($travelRequest);
     }
 
     /**
@@ -80,24 +73,20 @@ class TravelRequestController extends Controller
      */
     public function updateStatus(UpdateTravelRequestStatusRequest $request, string $id)
     {
-        $user = Auth::user();
-        $travelRequest = TravelRequest::findOrFail($id);
-        
-        // Apenas administradores podem atualizar o status
-        if (!$user->isAdmin()) {
-            return response()->json(['message' => 'Apenas administradores podem atualizar o status'], Response::HTTP_FORBIDDEN);
+        try {
+            $travelRequest = $this->travelRequestService->updateTravelRequestStatus(
+                $id,
+                $request->status,
+                $request->reason_for_cancellation
+            );
+            return new TravelRequestResource($travelRequest);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Pedido de viagem não encontrado'], Response::HTTP_NOT_FOUND);
+        } catch (AuthorizationException $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-        
-        // Verificar se o status pode ser alterado para 'cancelado'
-        if ($request->status === 'cancelado' && !$travelRequest->canBeCancelled()) {
-            return response()->json([
-                'message' => 'Este pedido não pode ser cancelado. Verifique as regras de cancelamento.'
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-        
-        $travelRequest->updateStatus($request->status, $request->reason_for_cancellation);
-        
-        return new TravelRequestResource($travelRequest);
     }
 
     /**
@@ -109,23 +98,18 @@ class TravelRequestController extends Controller
             'reason_for_cancellation' => 'nullable|string|max:500',
         ]);
         
-        $user = Auth::user();
-        $travelRequest = TravelRequest::findOrFail($id);
-        
-        // Verificar se o usuário é o proprietário do pedido
-        if ($travelRequest->user_id !== $user->id) {
-            return response()->json(['message' => 'Você só pode cancelar seus próprios pedidos'], Response::HTTP_FORBIDDEN);
+        try {
+            $travelRequest = $this->travelRequestService->cancelTravelRequest(
+                $id,
+                $request->reason_for_cancellation
+            );
+            return new TravelRequestResource($travelRequest);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Pedido de viagem não encontrado'], Response::HTTP_NOT_FOUND);
+        } catch (AuthorizationException $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
+        } catch (\Exception $e) {
+            return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
-        
-        // Verificar se o pedido pode ser cancelado
-        if (!$travelRequest->canBeCancelled()) {
-            return response()->json([
-                'message' => 'Este pedido não pode ser cancelado. Verifique as regras de cancelamento.'
-            ], Response::HTTP_UNPROCESSABLE_ENTITY);
-        }
-        
-        $travelRequest->updateStatus('cancelado', $request->reason_for_cancellation);
-        
-        return new TravelRequestResource($travelRequest);
     }
 }

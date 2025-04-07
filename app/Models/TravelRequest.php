@@ -4,16 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Notifications\TravelRequestStatusUpdated;
 
 class TravelRequest extends Model
 {
     use HasFactory;
 
     /**
-     * The attributes that are mass assignable.
+     * Os atributos que são atribuíveis em massa.
      *
-     * @var array<int, string>
+     * @var array
      */
     protected $fillable = [
         'user_id',
@@ -25,9 +24,9 @@ class TravelRequest extends Model
     ];
 
     /**
-     * The attributes that should be cast.
+     * Os atributos que devem ser convertidos em tipos nativos.
      *
-     * @var array<string, string>
+     * @var array
      */
     protected $casts = [
         'departure_date' => 'date',
@@ -35,72 +34,39 @@ class TravelRequest extends Model
     ];
 
     /**
-     * User relationship
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Scope a query to only include travel requests with specific status.
-     */
-    public function scopeWithStatus($query, $status)
-    {
-        return $query->where('status', $status);
-    }
-
-    /**
-     * Scope a query to filter by date range.
-     */
-    public function scopeBetweenDates($query, $startDate, $endDate)
-    {
-        return $query->where(function ($query) use ($startDate, $endDate) {
-            $query->whereBetween('departure_date', [$startDate, $endDate])
-                  ->orWhereBetween('return_date', [$startDate, $endDate])
-                  ->orWhere(function ($query) use ($startDate, $endDate) {
-                      $query->where('departure_date', '<=', $startDate)
-                            ->where('return_date', '>=', $endDate);
-                  });
-        });
-    }
-
-    /**
-     * Scope a query to filter by destination
-     */
-    public function scopeDestination($query, $destination)
-    {
-        return $query->where('destination', 'like', "%{$destination}%");
-    }
-
-    /**
-     * Check if travel request can be cancelled
+     * Verifica se o pedido de viagem pode ser cancelado.
+     * 
+     * Regras de negócio para cancelamento:
+     * - Só pode cancelar pedidos no status 'solicitado' ou 'aprovado'
+     * - Se aprovado, só pode cancelar se a data de partida for pelo menos 7 dias a partir de hoje
+     *
+     * @return bool
      */
     public function canBeCancelled(): bool
     {
-        if ($this->status === 'cancelado') {
+        // Se o status não for 'solicitado' ou 'aprovado', não pode cancelar
+        if (!in_array($this->status, ['solicitado', 'aprovado'])) {
             return false;
         }
-    
+        
+        // Se for 'aprovado', verifica o prazo de 7 dias antes da partida
         if ($this->status === 'aprovado') {
-            // Previne erro se a data estiver nula
-            if (is_null($this->departure_date)) {
-                return false;
-            }
-    
-            return $this->departure_date->diffInDays(now()) >= 3;
+            return $this->departure_date->diffInDays(now()) >= 7;
         }
-    
+        
+        // Pedidos 'solicitados' sempre podem ser cancelados
         return true;
     }
 
     /**
-     * Update status and notify user
+     * Atualiza o status do pedido de viagem.
+     *
+     * @param string $status
+     * @param string|null $reasonForCancellation
+     * @return void
      */
     public function updateStatus(string $status, ?string $reasonForCancellation = null): void
     {
-        $oldStatus = $this->status;
-        
         $this->status = $status;
         
         if ($status === 'cancelado' && $reasonForCancellation) {
@@ -108,10 +74,38 @@ class TravelRequest extends Model
         }
         
         $this->save();
-        
-        // Notificar o usuário apenas se o status foi alterado
-        if ($oldStatus !== $status) {
-            $this->user->notify(new TravelRequestStatusUpdated($this));
-        }
+    }
+
+    /**
+     * Obtém o usuário relacionado a este pedido de viagem.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Escopo de consulta para filtrar por status.
+     */
+    public function scopeWithStatus($query, $status)
+    {
+        return $query->where('status', $status);
+    }
+
+    /**
+     * Escopo de consulta para filtrar por destino.
+     */
+    public function scopeDestination($query, $destination)
+    {
+        return $query->where('destination', 'like', "%{$destination}%");
+    }
+
+    /**
+     * Escopo de consulta para filtrar por período de data.
+     */
+    public function scopeBetweenDates($query, $startDate, $endDate)
+    {
+        return $query->whereDate('departure_date', '>=', $startDate)
+                     ->whereDate('return_date', '<=', $endDate);
     }
 }
