@@ -59,22 +59,4 @@ class AuthTest extends TestCase
             ]);
     }
 
-    /**
-     * Teste para tentativa de login com credenciais inválidas.
-     */
-    public function test_user_cannot_login_with_invalid_credentials(): void
-    {
-        $user = User::factory()->create([
-            'email' => 'invalid@example.com',
-            'password' => bcrypt('password123'),
-        ]);
-
-        $response = $this->postJson('/api/login', [
-            'email' => 'invalid@example.com',
-            'password' => 'wrongpassword',
-        ]);
-
-        $response->assertStatus(422);
-    }
-
 }

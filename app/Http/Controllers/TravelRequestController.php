@@ -5,17 +5,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreTravelRequestRequest;
 use App\Http\Requests\UpdateTravelRequestStatusRequest;
 use App\Http\Resources\TravelRequestResource;
-use App\Services\TravelRequestService;
+use App\Services\Interfaces\TravelRequestServiceInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class TravelRequestController extends Controller
 {
     protected $travelRequestService;
     
-    public function __construct(TravelRequestService $travelRequestService)
+    public function __construct(TravelRequestServiceInterface $travelRequestService)
     {
         $this->travelRequestService = $travelRequestService;
     }
@@ -25,17 +26,22 @@ class TravelRequestController extends Controller
      */
     public function index(Request $request)
     {
-        $request->validate([
-            'status' => 'nullable|string|in:solicitado,aprovado,cancelado',
-            'destination' => 'nullable|string|max:255',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-        ]);
+        try {
+            $request->validate([
+                'status' => 'nullable|string|in:solicitado,aprovado,cancelado',
+                'destination' => 'nullable|string|max:255',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+            ]);
 
-        $filters = $request->only(['status', 'destination', 'start_date', 'end_date']);
-        $travelRequests = $this->travelRequestService->getAllTravelRequests($filters);
-
-        return TravelRequestResource::collection($travelRequests);
+            $filters = $request->only(['status', 'destination', 'start_date', 'end_date']);
+            $travelRequests = $this->travelRequestService->getAllTravelRequests($filters);
+            
+            return TravelRequestResource::collection($travelRequests);
+        } catch (\Exception $e) {
+            Log::error('Erro ao listar pedidos de viagem: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao listar pedidos de viagem: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     /**
@@ -47,7 +53,8 @@ class TravelRequestController extends Controller
             $travelRequest = $this->travelRequestService->createTravelRequest($request->validated());
             return new TravelRequestResource($travelRequest);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            Log::error('Erro ao criar pedido de viagem: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao criar pedido de viagem: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -64,7 +71,8 @@ class TravelRequestController extends Controller
         } catch (AuthorizationException $e) {
             return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
+            Log::error('Erro ao visualizar pedido de viagem: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao visualizar pedido de viagem: ' . $e->getMessage()], Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -85,7 +93,8 @@ class TravelRequestController extends Controller
         } catch (AuthorizationException $e) {
             return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+            Log::error('Erro ao atualizar status do pedido: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao atualizar status: ' . $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 
@@ -94,11 +103,11 @@ class TravelRequestController extends Controller
      */
     public function cancel(Request $request, string $id)
     {
-        $request->validate([
-            'reason_for_cancellation' => 'nullable|string|max:500',
-        ]);
-        
         try {
+            $request->validate([
+                'reason_for_cancellation' => 'nullable|string|max:500',
+            ]);
+            
             $travelRequest = $this->travelRequestService->cancelTravelRequest(
                 $id,
                 $request->reason_for_cancellation
@@ -109,7 +118,8 @@ class TravelRequestController extends Controller
         } catch (AuthorizationException $e) {
             return response()->json(['message' => $e->getMessage()], Response::HTTP_FORBIDDEN);
         } catch (\Exception $e) {
-            return response()->json(['message' => $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
+            Log::error('Erro ao cancelar pedido: ' . $e->getMessage());
+            return response()->json(['message' => 'Erro ao cancelar pedido: ' . $e->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
     }
 }
